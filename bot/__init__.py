@@ -175,3 +175,6 @@ def get_closes(cursor, lat, lon):
         if len(temp_res) != 0:
             break
     return [get_json_from_row(cursor, tr) for tr in temp_res]
+
+def get_user_by_chat_id(chat_id):
+    pass

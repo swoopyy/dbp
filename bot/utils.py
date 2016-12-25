@@ -140,12 +140,17 @@ def get_geo_point_from_user(chat_id):
 
 
 def list_all_points_to_user(chat_id, location):
-    update_user_stage(cursor, chat_id, SEND_POINTS_TO_USER)
     lat = location['latitude']
     lon = location['longitude']
-    g_points = get_closes(cursor, lat, lon)
-    mes = u'Вот точки которые я для тебя нашел' + json.dumps(g_points)
+    g_points = json.dumps(get_closes(cursor, lat, lon))
+    update_user_stage(cursor, chat_id, g_points)
+    mes = u'Вот шавермы, которые я для тебя нашел. Введи номер, в которой хочешь купить шаверму' + g_points
     reply(chat_id, mes, None)
+
+def user_chosed_point(chat_id, stage, point):
+    points = json.loads(stage)
+    pass
+
 
 
 def user_is_alredy_registered(chat_id):
@@ -183,16 +188,18 @@ def process(chat_id, message=None, location=None, contact=None):
         if stage == SHAWARMA_POINT_NAME:
             update_sale_point_name(cursor, chat_id, message)
             shawarma_point_time_work(chat_id)
-        if stage == SHAWARMA_POINT_TIME_WORK:
+        elif stage == SHAWARMA_POINT_TIME_WORK:
             open, close = message.split()
             update_sale_point_time_work(cursor, chat_id, open, close)
             shawarma_point_price(chat_id)
-        if stage == SHAWARMA_POINT_PRICE:
+        elif stage == SHAWARMA_POINT_PRICE:
             update_sale_point_price(cursor, chat_id, message)
             shawarma_point_await_order(chat_id)
     elif is_chat_id_in_user(cursor, chat_id):
         stage = get_user_stage(cursor, chat_id)
         if stage == USER_WANTS_SHAWARMA:
             get_geo_point_from_user(chat_id)
+        elif '[{' in stage:
+            pass
 
 
