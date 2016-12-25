@@ -1,4 +1,5 @@
 # coding: utf-8
+import pymysql
 import logging
 import json
 import urllib3
@@ -19,7 +20,16 @@ USER_WANTS_SHAWARMA = u'Хочу шаверму'
 SEND_POINTS_TO_USER = u'SEND_POINTS_TO_USER'
 GET_GEOPOINT_FROM_USER = u'GET_GEOPOINT_FROM_USER'
 
-cursor = None
+db = pymysql.connect(
+    host='37.139.20.97',
+    port=3306,
+    user='shawapp',
+    passwd='shawpass',
+    use_unicode=True,
+    charset="utf8"
+)
+db.autocommit(True)
+cursor = db.cursor()
 
 
 class Button:
