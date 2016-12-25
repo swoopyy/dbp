@@ -16,6 +16,8 @@ SHAWARMA_POINT_TIME_WORK = u'SHAWARMA_POINT_TIME_WORK'
 SHAWARMA_POINT_PRICE = u'SHAWARMA_POINT_PRICE'
 SHAWARMA_POINT_AWAIT_ORDER = u'SHAWARMA_POINT_AWAIT_ORDER'
 USER_WANTS_SHAWARMA = u'Хочу шаверму'
+SEND_POINTS_TO_USER = u'SEND_POINTS_TO_USER'
+GET_GEOPOINT_FROM_USER = u'GET_GEOPOINT_FROM_USER'
 
 cursor = None
 
@@ -119,6 +121,17 @@ def user_can_list_shawarma_points(chat_id):
     btn = Button(USER_WANTS_SHAWARMA)
     reply(chat_id, mes, None, *[btn])
 
+def get_geo_point_from_user(chat_id):
+    update_user_stage(cursor, chat_id, GET_GEOPOINT_FROM_USER)
+    mes = u'Пришли свою гепозицию'
+    btn = Button(u'Прислать', request_location=True)
+    reply(chat_id, mes, None, *[btn])
+
+def list_all_points_to_user(chat_id, location):
+    update_user_stage(cursor, chat_id, SEND_POINTS_TO_USER)
+    mes = u'Вот точки которые я для тебя нашел'
+    reply(chat_id, mes, None)
+
 
 def process(chat_id, message=None, location=None, contact=None):
     if message == START:
@@ -132,7 +145,7 @@ def process(chat_id, message=None, location=None, contact=None):
             update_sale_point_owner_personal_data(cursor, chat_id, contact['phone_number'], contact['first_name'],
                                                   contact['last_name'] if 'last_name' in contact else None)
             shawarma_point_location(chat_id)
-        if is_chat_id_in_user(cursor, chat_id):
+        elif is_chat_id_in_user(cursor, chat_id):
             update_user_personal_data(cursor, chat_id, contact['phone_number'], contact['first_name'],
                                                   contact['last_name'] if 'last_name' in contact else None)
             user_can_list_shawarma_points(chat_id)
@@ -140,6 +153,9 @@ def process(chat_id, message=None, location=None, contact=None):
         if is_chat_id_in_shawarma_point_owner(cursor, chat_id):
             update_sale_point_location(cursor, chat_id, location['latitude'], location['longitude'])
             shawarma_point_name(chat_id)
+        elif is_chat_id_in_user(cursor, chat_id):
+            list_all_points_to_user(chat_id, location)
+
     elif is_chat_id_in_shawarma_point_owner(cursor, chat_id):
         stage = get_sale_point_owner_stage(cursor, chat_id)
         if stage == SHAWARMA_POINT_NAME:
@@ -154,3 +170,7 @@ def process(chat_id, message=None, location=None, contact=None):
             shawarma_point_await_order(chat_id)
     elif is_chat_id_in_shawarma_point_owner(cursor, chat_id):
         stage = get_user_stage(cursor, chat_id)
+        if stage == USER_WANTS_SHAWARMA:
+            get_geo_point_from_user(chat_id)
+
+

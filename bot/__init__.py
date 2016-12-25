@@ -81,7 +81,7 @@ def update_sale_point_price(cursor, chat_id, price):
 
 
 def is_chat_id_in_shawarma_point_owner(cursor, chat_id):
-    return True
+    return False
 
 def is_chat_id_in_user(cursor, chat_id):
-    return False
+    return True
