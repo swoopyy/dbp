@@ -176,5 +176,5 @@ def get_closes(cursor, lat, lon):
             break
     return [get_json_from_row(cursor, tr) for tr in temp_res]
 
-def get_user_by_chat_id(chat_id):
+def get_user_by_chat_id(cursor, chat_id):
     pass

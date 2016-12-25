@@ -147,9 +147,13 @@ def list_all_points_to_user(chat_id, location):
     mes = u'Вот шавермы, которые я для тебя нашел. Введи номер, в которой хочешь купить шаверму' + g_points
     reply(chat_id, mes, None)
 
-def user_chosed_point(chat_id, stage, point):
+def user_choosed_point(chat_id, stage, point):
     points = json.loads(stage)
-    pass
+    user = get_user_by_chat_id(cursor, chat_id)
+    shawarm = points[int(point)]
+    mes = u'Вам пришел заказ от пользователя {0} (Телефон: {1})'.format(user.name, user.phone_number)
+    btn = Button(u'Заказ готов')
+    reply(chat_id, mes, None, *[btn])
 
 
 
