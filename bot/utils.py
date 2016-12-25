@@ -30,6 +30,7 @@ db = pymysql.connect(
 )
 db.autocommit(True)
 cursor = db.cursor()
+cursor.execute('USE shaw_test')
 
 
 class Button:
@@ -137,14 +138,25 @@ def get_geo_point_from_user(chat_id):
     btn = Button(u'Прислать', request_location=True)
     reply(chat_id, mes, None, *[btn])
 
+
 def list_all_points_to_user(chat_id, location):
     update_user_stage(cursor, chat_id, SEND_POINTS_TO_USER)
-    mes = u'Вот точки которые я для тебя нашел'
+    lat = location['latitude']
+    lon = location['longitude']
+    g_points = get_closes(cursor, lat, lon)
+    mes = u'Вот точки которые я для тебя нашел' + json.dumps(g_points)
     reply(chat_id, mes, None)
+
+
+def user_is_alredy_registered(chat_id):
+    reply(chat_id, u'Вы уже зарегистрированы', None)
 
 
 def process(chat_id, message=None, location=None, contact=None):
     if message == START:
+        # if is_chat_id_in_user(cursor, chat_id) or is_chat_id_in_shawarma_point_owner(cursor, chat_id):
+        #     user_is_alredy_registered(chat_id)
+        # else:
         start(chat_id)
     elif message == REGISTER_SHAWARMA_POINT_MAN:
         register_shawarma_point_man(chat_id)
@@ -178,7 +190,7 @@ def process(chat_id, message=None, location=None, contact=None):
         if stage == SHAWARMA_POINT_PRICE:
             update_sale_point_price(cursor, chat_id, message)
             shawarma_point_await_order(chat_id)
-    elif is_chat_id_in_shawarma_point_owner(cursor, chat_id):
+    elif is_chat_id_in_user(cursor, chat_id):
         stage = get_user_stage(cursor, chat_id)
         if stage == USER_WANTS_SHAWARMA:
             get_geo_point_from_user(chat_id)
