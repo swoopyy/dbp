@@ -139,12 +139,41 @@ def get_geo_point_from_user(chat_id):
     reply(chat_id, mes, None, *[btn])
 
 
+def format_points(message, points):
+    ret = ""
+
+    for point in points:
+        Name = point['Name']
+        rating = min(max(0, point['rating']), 5)
+        Price = point['price']
+        Address = point['Address']
+        Phone = point['PublicPhone']
+
+        stars_size = 10
+        stars_number = int(rating / 5 * stars_size)
+        empty_size = stars_size - stars_number
+
+        stars_str = "|" + '#' * stars_number + '_' * empty_size + "| {0:.2f}/5".format(rating)
+
+        html = "<p1> {} </p1>\
+                <h1> {} </font> </h1>\
+                <h2>  Оценка: {} </h2>\
+                <h3> Цена: {:.2f} </h3>\
+                <p> {} </p>\
+                <p> {} </p>\
+                ".format(message, Name, stars_str, Price, Address, Phone)
+
+        ret += html
+
+    return ret
+
 def list_all_points_to_user(chat_id, location):
     update_user_stage(cursor, chat_id, SEND_POINTS_TO_USER)
     lat = location['latitude']
     lon = location['longitude']
     g_points = get_closes(cursor, lat, lon)
-    mes = u'Вот точки которые я для тебя нашел' + json.dumps(g_points)
+
+    mes = format_points(u'Вот точки которые я для тебя нашел', g_points)
     reply(chat_id, mes, None)
 
 
