@@ -176,5 +176,16 @@ def get_closes(cursor, lat, lon):
             break
     return [get_json_from_row(cursor, tr) for tr in temp_res]
 
-def get_user_by_chat_id(chat_id):
-    pass
+
+def get_user_by_chat_id(cursor, chat_id):
+    cursor.execute(
+        'SELECT * FROM User WHERE chat_id = {0};'.format(
+            str(chat_id)
+        )
+    )
+    user = cursor.fetchone()
+    user_dict = get_json_from_row(cursor, user)
+    result_dict = {}
+    for key, value in user_dict.items():
+        result_dict[key.lower()] = value
+    return result_dict
