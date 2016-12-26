@@ -19,6 +19,7 @@ SHAWARMA_POINT_AWAIT_ORDER = u'SHAWARMA_POINT_AWAIT_ORDER'
 USER_WANTS_SHAWARMA = u'Хочу шаверму'
 SEND_POINTS_TO_USER = u'SEND_POINTS_TO_USER'
 GET_GEOPOINT_FROM_USER = u'GET_GEOPOINT_FROM_USER'
+ORDER_IS_READY = u'ORDER_IS_READY'
 
 db = pymysql.connect(
     host='37.139.20.97',
@@ -31,7 +32,6 @@ db = pymysql.connect(
 db.autocommit(True)
 cursor = db.cursor()
 cursor.execute('USE shaw_test')
-
 
 class Button:
     def __init__(self, text, request_location=False, request_contact=False):
@@ -141,7 +141,7 @@ def get_geo_point_from_user(chat_id):
 
 def format_points(message, points):
     ret = ""
-
+    n = 1
     if len(points) > 3:
         points = points[:3]
 
@@ -151,42 +151,59 @@ def format_points(message, points):
         Distance = point['Distance']
         Price = point['price']
         Address = point['Address']
-        Phone = point['PublicPhone']
 
         stars_size = 10
         stars_number = int(rating / 5 * stars_size)
         empty_size = stars_size - stars_number
-
+        ret += str(n) + '.\n'
+        n += 1
         stars_str = "|" + '#' * stars_number + '_' * empty_size + "| {0:.2f}/5".format(rating)
 
-        html = "<p1> {} </p1>\
-                <h1> {} {:.2f}км </h1>\
-                <h2>  Оценка: {} </h2>\
-                <h3> Цена: {:.2f} </h3>\
-                <p> {} </p>\
-                <p> {} </p>\
-                ".format(message, Name, Distance, stars_str, Price, Address, Phone)
+        html = "{} \n{} {:.2f}км \nОценка: {} \nЦена: {:.2f} \n{}  \n".format(message, Name, Distance, stars_str, Price, Address)
 
         ret += html
 
     return ret
 
+
 def list_all_points_to_user(chat_id, location):
     lat = location['latitude']
     lon = location['longitude']
     g_points = get_closes(cursor, lat, lon)
-    print(json.dumps(g_points))
-    update_user_stage(cursor, chat_id, str([item['system_id'] for item in g_points]))
-    mes = format_points(g_points, u'Вот точки которые я для тебя нашел')
-    reply(chat_id, mes, 'HTML')
+    update_user_stage(cursor, chat_id, json.dumps([{'system_id': item['system_id']} for item in g_points]))
+    mes = format_points(u'Вот точки, которые я для тебя нашел', g_points)
+    reply(chat_id, mes)
+
 
 def user_choosed_point(chat_id, stage, point):
     points = json.loads(stage)
     user = get_user_by_chat_id(cursor, chat_id)
-    shawarm = points[int(point)]
-    mes = u'Вам пришел заказ от пользователя {0} (Телефон: {1})'.format(user.name, user.phone_number)
+    shawarm = points[int(point) - 1]
+    add_order(cursor, user['system_id'], shawarm['system_id'])
+    mes = u'Вам пришел заказ от пользователя {0} (Телефон: {1})'.format(user['name'], user['tel'])
+    print(shawarm['system_id'])
+    pnt = get_sale_point_owner_by_point_id(cursor, shawarm['system_id'])
     btn = Button(u'Заказ готов')
-    reply(chat_id, mes, None, *[btn])
+    update_sale_point_owner_stage(cursor, pnt['chat_id'], ORDER_IS_READY)
+    reply(pnt['chat_id'], mes, None, *[btn])
+    reply(chat_id, u'Ожидайте, вам придет уведомление о готовности', None)
+
+
+def send_user_order_is_ready(chat_id):
+    order = get_order_by_chat_id(cursor, chat_id)
+    u_id = order['U_id']
+    user = get_user_by_id(cursor, u_id)['chat_id']
+    update_user_stage(cursor, user, USER_WANTS_SHAWARMA)
+    set_order_done(cursor, order['system_id'])
+    mes = u'Твой заказ готов! \n Если хочешь еще шаверму шаверму - обращайся.'
+    btn = Button(USER_WANTS_SHAWARMA)
+    reply(user, mes, None, *[btn])
+
+
+
+
+
+
 
 def user_is_alredy_registered(chat_id):
     reply(chat_id, u'Вы уже зарегистрированы', None)
@@ -230,11 +247,13 @@ def process(chat_id, message=None, location=None, contact=None):
         elif stage == SHAWARMA_POINT_PRICE:
             update_sale_point_price(cursor, chat_id, message)
             shawarma_point_await_order(chat_id)
+        elif stage == ORDER_IS_READY:
+            send_user_order_is_ready(chat_id)
     elif is_chat_id_in_user(cursor, chat_id):
         stage = get_user_stage(cursor, chat_id)
         if stage == USER_WANTS_SHAWARMA:
             get_geo_point_from_user(chat_id)
-        elif '[{' in stage:
-            pass
+        elif '[' in stage:
+            user_choosed_point(chat_id, stage, message)
 
 
