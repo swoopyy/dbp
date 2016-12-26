@@ -216,3 +216,11 @@ def set_order_done(cursor, order_id):
     cursor.execute(
         'UPDATE ShawarmaOrder SET isDone = TRUE WHERE system_id = {0};'.format(str(order_id))
     )
+
+
+def get_user_by_id(cursor, user_id):
+    cursor.execute(
+        'SELECT * FROM User WHERE system_id = {0}'.format(str(user_id))
+    )
+    user = cursor.fetchone()
+    return get_json_from_row(cursor, user)
