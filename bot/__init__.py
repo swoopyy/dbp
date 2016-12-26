@@ -170,11 +170,22 @@ def get_closes(cursor, lat, lon):
         cursor.execute('select * from (select SalePoint.*, (6371 * acos(cos(radians(\'' + str(lat) + '\'))\
         * cos(radians(Latitude_WGS84)) * cos(radians(Longitude_WGS84) - radians(\'' + str(lon) + '\'))\
         + sin(radians(\'' + str(lat) + '\')) * sin(radians(Latitude_WGS84)))) as Distance from SalePoint) t\
-        where t.Distance < 1 order by Distance asc;')
+        where t.Distance < 10 order by Distance asc;')
         temp_res = cursor.fetchall()
         if len(temp_res) != 0:
             break
     return [get_json_from_row(cursor, tr) for tr in temp_res]
 
+
 def get_user_by_chat_id(cursor, chat_id):
-    pass
+    cursor.execute(
+        'SELECT * FROM User WHERE chat_id = {0};'.format(
+            str(chat_id)
+        )
+    )
+    user = cursor.fetchone()
+    user_dict = get_json_from_row(cursor, user)
+    result_dict = {}
+    for key, value in user_dict.items():
+        result_dict[key.lower()] = value
+    return result_dict
