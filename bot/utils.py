@@ -142,9 +142,13 @@ def get_geo_point_from_user(chat_id):
 def format_points(message, points):
     ret = ""
 
+    if len(points) > 3:
+        points = points[:3]
+
     for point in points:
         Name = point['Name']
         rating = min(max(0, point['rating']), 5)
+        Distance = point['Distance']
         Price = point['price']
         Address = point['Address']
         Phone = point['PublicPhone']
@@ -156,12 +160,12 @@ def format_points(message, points):
         stars_str = "|" + '#' * stars_number + '_' * empty_size + "| {0:.2f}/5".format(rating)
 
         html = "<p1> {} </p1>\
-                <h1> {} </font> </h1>\
+                <h1> {} {:.2f}км </h1>\
                 <h2>  Оценка: {} </h2>\
                 <h3> Цена: {:.2f} </h3>\
                 <p> {} </p>\
                 <p> {} </p>\
-                ".format(message, Name, stars_str, Price, Address, Phone)
+                ".format(message, Name, Distance, stars_str, Price, Address, Phone)
 
         ret += html
 
