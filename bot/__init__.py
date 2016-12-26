@@ -201,3 +201,18 @@ def get_sale_point_owner_by_point_id(cursor, point_id):
     )
     point_owner = cursor.fetchone()
     return get_json_from_row(cursor, point_owner)
+
+
+def get_order_by_chat_id(cursor, chat_id):
+    point_id = get_sale_point_id_by_chat_id(cursor, chat_id)
+    cursor.execute(
+        'SELECT * FROM ShawarmaOrder WHERE SP_id = {0} AND isDone = FALSE;'.format(str(point_id))
+    )
+    order = cursor.fetchone()
+    return get_json_from_row(cursor, order)
+
+
+def set_order_done(cursor, order_id):
+    cursor.execute(
+        'UPDATE ShawarmaOrder SET isDone = TRUE WHERE system_id = {0};'.format(str(order_id))
+    )
