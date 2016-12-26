@@ -26,8 +26,11 @@ def update_sale_point_owner_personal_data(cursor, chat_id, phone_number, first_n
 
 
 def add_sale_point_owner(cursor,  chat_id):
-    cursor.execute('insert into SalePointOwner (chat_id)'
+    cursor.execute('insert into SalePointOwner (chat_id)' +
                    'values (\'' + str(chat_id) + '\')')
+    cursor.execute('SELECT system_id FROM SalePointOwner WHERE chat_id = {0}'.format(str(chat_id)))
+    owner_id = cursor.fetchone()[0]
+    cursor.execute('INSERT INTO SalePoint (owner_id) VALUES ({0})'.format(owner_id))
 
 
 def update_sale_point_location(cursor, chat_id, lat, lon):
@@ -62,7 +65,7 @@ def update_sale_point_time_work(cursor, chat_id, open_time, close_time):
 def get_sale_point_id_by_chat_id(cursor, chat_id):
     cursor.execute('USE shaw_test')
     cursor.execute(
-        'SELECT point.system_id FROM SalePointOwner owner, SalePoint point WHERE owner.chat_id = {0};'.format(str(chat_id)))
+        'SELECT point.system_id FROM SalePointOwner owner JOIN SalePoint point ON point.owner_id = owner.system_id WHERE owner.chat_id = {0};'.format(str(chat_id)))
     sale_point = cursor.fetchone()
     return int(sale_point[0])
 
@@ -151,7 +154,6 @@ def is_chat_id_in_shawarma_point_owner(cursor, chat_id):
     return True
 
 
-
 def is_chat_id_in_user(cursor, chat_id):
     cursor.execute('select * from User where chat_id = \'' + str(chat_id) + '\'')
     fetch = cursor.fetchall()
@@ -189,3 +191,13 @@ def get_user_by_chat_id(cursor, chat_id):
     for key, value in user_dict.items():
         result_dict[key.lower()] = value
     return result_dict
+
+
+def get_sale_point_owner_by_point_id(cursor, point_id):
+    cursor.execute(
+        'SELECT * FROM SalePointOwner owner JOIN SalePoint point ON point.owner_id = owner.system_id WHERE point.system_id = {0}'.format(
+            str(point_id)
+        )
+    )
+    point_owner = cursor.fetchone()
+    return get_json_from_row(cursor, point_owner)
